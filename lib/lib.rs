@@ -1,7 +1,6 @@
 #![allow(clippy::needless_return)]
 
 pub mod duration;
-pub mod errors;
 
 use duration::Hhmmss;
 use serde::{Deserialize, Serialize};
