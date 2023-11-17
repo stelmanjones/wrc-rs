@@ -1,6 +1,9 @@
 use serde::{Deserialize, Serialize};
 use serde_json::{self, Error};
 
+
+pub const PACKET_SIZE : usize = 240;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Packet {
     // A rolling unique identifier for the current packet. Can be used to order and drop received packets.
@@ -252,6 +255,16 @@ impl Packet {
     pub fn to_json(self) -> Result<String, Error> {
         serde_json::to_string(&self)
     }
+
+    
+}
+
+impl TryFrom<&[u8;240]> for Packet {
+    type Error = bincode::Error;
+    fn try_from(value: &[u8; PACKET_SIZE]) -> Result<Self, bincode::Error> {
+        return bincode::deserialize(value)
+    }
+
 }
 
 #[cfg(test)]
