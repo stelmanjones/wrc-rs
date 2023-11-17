@@ -1,8 +1,13 @@
+#![allow(clippy::needless_return)]
+
+pub mod duration;
+pub mod errors;
+
+use duration::Hhmmss;
 use serde::{Deserialize, Serialize};
 use serde_json::{self, Error};
 
-
-pub const PACKET_SIZE : usize = 240;
+pub const PACKET_SIZE: usize = 240;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Packet {
@@ -256,18 +261,37 @@ impl Packet {
         serde_json::to_string(&self)
     }
 
-    
+    /// Returns the current stage time as a prettified string. (00:15:24.497)
+    pub fn stage_time_pretty(self) -> String {
+        let dur = chrono::Duration::seconds(self.stage_current_time as i64);
+        return dur.hhmmssxxx();
+    }
+    /// Returns the total ingame time as a prettified string. (00:15:24.497)
+    pub fn total_time_pretty(self) -> String {
+        let dur = chrono::Duration::seconds(self.game_total_time as i64);
+        return dur.hhmmssxxx();
+    }
+    /// Returns current throttle input as a percentage.
+    pub fn throttle_percentage(self) -> usize {
+        return self.vehicle_throttle as usize * 100;
+    }
+    /// Returns current brake input as a percentage.
+    pub fn brake_percentage(self) -> usize {
+        return self.vehicle_brake as usize * 100;
+    }
+    /// Returns current clutch input as a percentage.
+    pub fn clutch_percentage(self) -> usize {
+        return self.vehicle_clutch as usize * 100;
+    }
+    /// Returns current handbrake input as a percentage.
+    pub fn handbrake_percentage(self) -> usize {
+        return self.vehicle_handbrake as usize * 100;
+    }
 }
 
-impl TryFrom<&[u8;240]> for Packet {
+impl TryFrom<&[u8; 240]> for Packet {
     type Error = bincode::Error;
     fn try_from(value: &[u8; PACKET_SIZE]) -> Result<Self, bincode::Error> {
-        return bincode::deserialize(value)
+        return bincode::deserialize(value);
     }
-
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
 }
