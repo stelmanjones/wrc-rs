@@ -3,6 +3,10 @@ name = "wrc"
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
+description = "A simple telemetry library for WRC 2023."
+repository = "https://github.com/stelmanjones/wrc"
+categories = ["api-bindings","game-development", "network-programming"]
+keywords = ["gamedev", "telemetry", "wrc", "udp", "api"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
