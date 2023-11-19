@@ -5,10 +5,77 @@ pub mod duration;
 use duration::Hhmmss;
 use serde::{Deserialize, Serialize};
 use serde_json::{self, Error};
-
+use tracing::{debug, info};
+use std::net::UdpSocket;
 pub const PACKET_SIZE: usize = 240;
 
-#[derive(Debug, Serialize, Deserialize)]
+
+
+
+pub struct WrcClient {
+    packets: std::sync::Mutex<PacketList>,
+
+
+}
+
+impl Default for WrcClient {
+fn default() -> Self {
+    Self {
+        packets: std::sync::Mutex::new(PacketList::default()),
+        
+    }
+
+}
+}
+
+impl WrcClient {
+    pub async fn run(self,address: &str) {
+        let conn = UdpSocket::bind(address).expect("Error");
+        let packets = self.packets;
+        tokio::spawn(async move {
+
+
+            let mut buf = [0u8;PACKET_SIZE];
+
+    info!("WRC Telemetry server running!");
+         
+               while let Ok((len,_)) = conn.recv_from(&mut buf) {
+                let p = Packet::try_from(&buf).unwrap();
+                let mut list = packets.lock().expect("Error retreiving lock");
+                if list.len() >= 100 {
+                    list.pop();
+                }
+                list.push(p);
+        debug!("Read {:?} bytes from UDP stream.", len);
+               }
+        }).await.ok();
+    }
+    pub async fn latest(self) -> Result<Packet, anyhow::Error> {
+let packets = self.packets.lock().unwrap();
+    if let Some(packet) = packets.last() {
+        Ok(packet.to_owned())
+    } else {
+        Err(anyhow::anyhow!("Could not get last packet."))
+    }
+
+    }
+}
+
+
+
+pub type PacketList = Vec<Packet>;
+
+
+fn test() {
+    let mut list = PacketList::default();
+}
+
+
+
+
+
+
+#[derive(Debug, Serialize, Deserialize,Clone,Copy)]
 pub struct Packet {
     // A rolling unique identifier for the current packet. Can be used to order and drop received packets.
     pub packet_uid: u64,
@@ -294,3 +361,10 @@ impl TryFrom<&[u8; 240]> for Packet {
         return bincode::deserialize(value);
     }
 }
+
+
+
+
+
+
+

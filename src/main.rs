@@ -1,5 +1,6 @@
 use clap::Arg;
 use clap::{arg, command, value_parser, ArgAction, Command};
+use wrc::WrcClient;
 use std::io;
 use std::mem;
 use tokio::net::UdpSocket;
@@ -49,22 +50,11 @@ async fn main() -> io::Result<()> {
         address = "0.0.0.0:6969".to_string();
         debug!("{address}");
     }
+let client = WrcClient::default();
 
-    let sock = UdpSocket::bind(address).await?;
-    info!("WRC Telemetry server running!");
-    let mut buf = [0; wrc::PACKET_SIZE];
+    tokio::spawn(async move {
+        client.run(&address).await;
 
-    loop {
-        //  interval.tick().await;
-        let (len, _) = sock.recv_from(&mut buf).await?;
-
-        let packet: wrc::Packet = wrc::Packet::try_from(&buf).expect("Error deserializing");
-
-        debug!("Read {:?} bytes from UDP stream.", len);
-        if let Ok(res) = serde_json::to_string_pretty(&packet) {
-            info!("{res}")
-        } else {
-            error!("Could not perform JSON serialization.")
-        }
-    }
+}).await.expect_err("Error joining thread.");
+    Ok(())
 }
